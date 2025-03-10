@@ -115,7 +115,7 @@
             title: '我们结婚啦！诚挚邀请您来见证我们的幸福时刻',
             desc: '诚邀您参加我们的婚礼，共同见证这美好的时刻。',
             imgUrl: 'https://keen-tarsier-47f6bc.netlify.app/images/cover.jpg',
-            link: window.location.href
+            link: "https://keen-tarsier-47f6bc.netlify.app/pages/invite_page.html"
         };
 
         // 初始化微信配置
@@ -137,7 +137,7 @@
                     
                     // 配置微信 JS-SDK
                     wx.config({
-                        debug: false,
+                        debug: true,
                         appId: wxConfig.appId,
                         timestamp: wxConfig.timestamp,
                         nonceStr: wxConfig.nonceStr,
@@ -152,6 +152,8 @@
 
                     // 注册分享事件
                     wx.ready(function() {
+                        console.log('微信 JS-SDK 配置成功');
+                        
                         // 分享给朋友
                         wx.updateAppMessageShareData({
                             title: shareConfig.title,
@@ -160,6 +162,9 @@
                             imgUrl: shareConfig.imgUrl,
                             success: function() {
                                 console.log('分享设置成功');
+                            },
+                            fail: function(res) {
+                                console.error('分享设置失败：', res);
                             }
                         });
                         
@@ -170,6 +175,9 @@
                             imgUrl: shareConfig.imgUrl,
                             success: function() {
                                 console.log('分享设置成功');
+                            },
+                            fail: function(res) {
+                                console.error('分享设置失败：', res);
                             }
                         });
 
