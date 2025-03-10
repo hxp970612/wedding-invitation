@@ -124,14 +124,20 @@
             if (typeof wx !== 'undefined' && isWeixinBrowser()) {
                 try {
                     const currentUrl = location.href.split('#')[0];
+                    const apiUrl = `https://1311648736-ft8i2n8ogo.ap-shanghai.tencentscf.com/api/wx/config?url=${encodeURIComponent(currentUrl)}`;
                     // 获取签名配置
-                    const response = await fetch('/.netlify/functions/wx-sign', {
-                        method: 'POST',
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
                         headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ url: currentUrl })
+                            'Accept': 'application/json'
+                        }
                     });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        log('错误响应内容: ' + errorText);
+                        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+                    }
                     
                     const wxConfig = await response.json();
                     
