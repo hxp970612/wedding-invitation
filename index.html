@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我们结婚啦！</title>
-    <!-- 社交分享元数据 -->
+    
+    <!-- 微信分享卡片配置 -->
+    <meta itemprop="name" content="我们结婚啦！诚挚邀请您来见证我们的幸福时刻">
+    <meta itemprop="description" content="诚邀您参加我们的婚礼，共同见证这美好的时刻。">
+    <meta itemprop="image" content="https://keen-tarsier-47f6bc.netlify.app/images/cover.jpg">
+    
+    <!-- 通用社交分享元数据 -->
+    <meta property="og:type" content="website">
     <meta property="og:title" content="我们结婚啦！诚挚邀请您来见证我们的幸福时刻">
     <meta property="og:description" content="诚邀您参加我们的婚礼，共同见证这美好的时刻。">
     <meta property="og:image" content="https://keen-tarsier-47f6bc.netlify.app/images/cover.jpg">
@@ -65,49 +72,6 @@
         .copy {
             background-color: #666;
         }
-        .qrcode-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .qrcode-container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            position: relative;
-            min-width: 260px;
-        }
-        #qrcode {
-            margin: 10px auto;
-            width: 200px;
-            height: 200px;
-        }
-        #qrcode img {
-            display: block;
-            margin: 0 auto;
-        }
-        .qrcode-container p {
-            margin: 10px 0;
-            color: #333;
-        }
-        .close-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: none;
-            border: none;
-            color: white;
-            font-size: 24px;
-            cursor: pointer;
-        }
         #toast {
             position: fixed;
             bottom: 20px;
@@ -124,12 +88,12 @@
 <body>
     <div class="container">
         <a href="pages/invite_page.html">
-            <img src="images/cover.jpg" alt="婚礼邀请函">
+            <img src="images/cover.jpg" alt="婚礼邀请函" id="shareImage">
         </a>
         
         <!-- 分享按钮 -->
         <div class="share-buttons">
-            <button class="share-button wechat" onclick="showQRCode()">
+            <button class="share-button wechat" onclick="shareToWechat()">
                 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M8.5,13.5A1.5,1.5,0,1,0,7,12,1.5,1.5,0,0,0,8.5,13.5Zm6.5-1.5a1.5,1.5,0,1,1-1.5-1.5A1.5,1.5,0,0,1,15,12ZM12,1.5A10.5,10.5,0,1,0,22.5,12,10.5,10.5,0,0,0,12,1.5Z'/%3E%3C/svg%3E" alt="微信">
                 分享到微信
             </button>
@@ -140,54 +104,102 @@
         </div>
     </div>
 
-    <!-- 二维码弹窗 -->
-    <div class="qrcode-modal" id="qrcodeModal">
-        <button class="close-button" onclick="hideQRCode()">&times;</button>
-        <div class="qrcode-container">
-            <div id="qrcode"></div>
-            <p>请使用微信扫描二维码分享</p>
-        </div>
-    </div>
-
     <!-- 提示框 -->
     <div id="toast">链接已复制</div>
 
-    <!-- 引入更可靠的 QRCode 库 -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
+    <!-- 引入微信 JS-SDK -->
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
     <script>
-        // 显示二维码
-        function showQRCode() {
-            const modal = document.getElementById('qrcodeModal');
-            const qrcodeContainer = document.getElementById('qrcode');
-            modal.style.display = 'flex';
-            
-            // 清除之前的二维码
-            qrcodeContainer.innerHTML = '';
-            
-            // 获取当前页面完整URL
-            const currentUrl = window.location.href;
-            console.log('Generating QR code for URL:', currentUrl); // 调试日志
-            
-            try {
-                // 生成新的二维码
-                new QRCode(qrcodeContainer, {
-                    text: currentUrl,
-                    width: 200,
-                    height: 200,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                console.log('QR code generated successfully'); // 调试日志
-            } catch (error) {
-                console.error('Error generating QR code:', error); // 错误日志
-                qrcodeContainer.innerHTML = '<p style="color: red;">二维码生成失败，请重试</p>';
+        // 分享配置
+        const shareConfig = {
+            title: '我们结婚啦！诚挚邀请您来见证我们的幸福时刻',
+            desc: '诚邀您参加我们的婚礼，共同见证这美好的时刻。',
+            imgUrl: 'https://keen-tarsier-47f6bc.netlify.app/images/cover.jpg',
+            link: window.location.href
+        };
+
+        // 初始化微信配置
+        async function initWxConfig() {
+            if (typeof wx !== 'undefined' && isWeixinBrowser()) {
+                try {
+                    // 获取签名配置
+                    const response = await fetch('/.netlify/functions/wx-sign', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            url: window.location.href.split('#')[0]
+                        })
+                    });
+                    
+                    const wxConfig = await response.json();
+                    
+                    // 配置微信 JS-SDK
+                    wx.config({
+                        debug: false,
+                        appId: wxConfig.appId,
+                        timestamp: wxConfig.timestamp,
+                        nonceStr: wxConfig.nonceStr,
+                        signature: wxConfig.signature,
+                        jsApiList: [
+                            'updateAppMessageShareData',
+                            'updateTimelineShareData',
+                            'onMenuShareTimeline',
+                            'onMenuShareAppMessage'
+                        ]
+                    });
+
+                    // 注册分享事件
+                    wx.ready(function() {
+                        // 分享给朋友
+                        wx.updateAppMessageShareData({
+                            title: shareConfig.title,
+                            desc: shareConfig.desc,
+                            link: shareConfig.link,
+                            imgUrl: shareConfig.imgUrl,
+                            success: function() {
+                                console.log('分享设置成功');
+                            }
+                        });
+                        
+                        // 分享到朋友圈
+                        wx.updateTimelineShareData({
+                            title: shareConfig.title,
+                            link: shareConfig.link,
+                            imgUrl: shareConfig.imgUrl,
+                            success: function() {
+                                console.log('分享设置成功');
+                            }
+                        });
+
+                        // 兼容旧版本
+                        wx.onMenuShareTimeline(shareConfig);
+                        wx.onMenuShareAppMessage(shareConfig);
+                    });
+
+                    wx.error(function(res) {
+                        console.error('微信配置失败：', res);
+                    });
+                } catch (error) {
+                    console.error('初始化微信配置失败：', error);
+                }
             }
         }
 
-        // 隐藏二维码
-        function hideQRCode() {
-            document.getElementById('qrcodeModal').style.display = 'none';
+        // 分享到微信
+        function shareToWechat() {
+            if (isWeixinBrowser()) {
+                showToast('请点击右上角的菜单按钮进行分享');
+            } else {
+                showToast('请在微信中打开链接进行分享');
+            }
+        }
+
+        // 检查是否在微信浏览器中
+        function isWeixinBrowser() {
+            var ua = navigator.userAgent.toLowerCase();
+            return /micromessenger/.test(ua);
         }
 
         // 复制链接
@@ -195,12 +207,10 @@
             const currentUrl = window.location.href;
             
             if (navigator.clipboard && window.isSecureContext) {
-                // 对于支持 Clipboard API 的现代浏览器
                 navigator.clipboard.writeText(currentUrl)
-                    .then(() => showToast())
+                    .then(() => showToast('链接已复制'))
                     .catch(() => fallbackCopyToClipboard(currentUrl));
             } else {
-                // 回退方案
                 fallbackCopyToClipboard(currentUrl);
             }
         }
@@ -217,7 +227,7 @@
             
             try {
                 document.execCommand('copy');
-                showToast();
+                showToast('链接已复制');
             } catch (err) {
                 console.error('复制失败:', err);
                 alert('复制失败，请手动复制链接');
@@ -227,25 +237,17 @@
         }
 
         // 显示提示
-        function showToast() {
+        function showToast(message) {
             const toast = document.getElementById('toast');
+            toast.textContent = message;
             toast.style.display = 'block';
             setTimeout(() => {
                 toast.style.display = 'none';
             }, 2000);
         }
 
-        // 点击模态框背景关闭
-        document.getElementById('qrcodeModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                hideQRCode();
-            }
-        });
-
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page loaded, QR code library status:', typeof QRCode); // 调试日志
-        });
+        // 页面加载完成后初始化微信配置
+        document.addEventListener('DOMContentLoaded', initWxConfig);
     </script>
 </body>
 </html>
