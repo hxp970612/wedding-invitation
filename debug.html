@@ -27,11 +27,26 @@
             margin: 5px;
             cursor: pointer;
         }
+        .server-status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .server-status.online {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .server-status.offline {
+            background-color: #f2dede;
+            color: #a94442;
+        }
     </style>
 </head>
 <body>
     <div class="debug-panel">
         <h3>调试控制面板</h3>
+        <div id="serverStatus" class="server-status">检查服务器状态中...</div>
+        <button onclick="checkServer()">检查服务器状态</button>
         <button onclick="mockWxConfig()">模拟微信配置</button>
         <button onclick="mockShare()">模拟分享</button>
         <button onclick="clearLog()">清除日志</button>
@@ -58,18 +73,54 @@
             }
         };
 
+        // 检查服务器状态
+        async function checkServer() {
+            const statusDiv = document.getElementById('serverStatus');
+            try {
+                log('正在检查服务器状态...');
+                const response = await fetch('https://1311648736-ft8i2n8ogo.ap-shanghai.tencentscf.com/api/wx/config?url=test', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    statusDiv.className = 'server-status online';
+                    statusDiv.textContent = '服务器在线 (端口9000)';
+                    log('服务器状态检查：在线');
+                } else {
+                    statusDiv.className = 'server-status offline';
+                    statusDiv.textContent = '服务器返回错误: ' + response.status;
+                    log('服务器状态检查：错误 ' + response.status);
+                }
+            } catch (error) {
+                statusDiv.className = 'server-status offline';
+                statusDiv.textContent = '服务器离线或无法访问';
+                log('服务器状态检查：离线 - ' + error.message);
+                log('请确保：');
+                log('1. 本地服务器已启动（端口9000）');
+                log('2. 服务器已配置跨域访问（CORS）');
+                log('3. 防火墙未阻止访问');
+            }
+        }
+
         // 实际调用签名接口
         async function mockWxConfig() {
             try {
+                const statusDiv = document.getElementById('serverStatus');
+                if (statusDiv.className !== 'server-status online') {
+                    log('警告：服务器可能离线，请先检查服务器状态');
+                }
+
                 log('开始请求签名...');
                 const currentUrl = window.location.href.split('#')[0];
                 log('当前URL: ' + currentUrl);
 
-                // 构建完整的 Netlify Function URL
-                const functionUrl = window.location.origin + '/.netlify/functions/wx-sign?url=' + encodeURIComponent(currentUrl);
-                log('请求签名接口URL: ' + functionUrl);
+                const apiUrl = `https://1311648736-ft8i2n8ogo.ap-shanghai.tencentscf.com/api/wx/config?url=${encodeURIComponent(currentUrl)}`;
+                log('请求签名接口URL: ' + apiUrl);
 
-                const response = await fetch(functionUrl, {
+                const response = await fetch(apiUrl, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json'
@@ -87,7 +138,6 @@
                 const data = await response.json();
                 log('签名接口响应数据: ' + JSON.stringify(data, null, 2));
 
-                // 调用实际的配置代码
                 wx.config({
                     debug: true,
                     appId: data.appId,
@@ -101,6 +151,12 @@
                 });
             } catch (error) {
                 log('错误：' + error.message);
+                if (error.message.includes('Failed to fetch')) {
+                    log('提示：这个错误通常意味着：');
+                    log('1. 本地服务器未启动');
+                    log('2. 服务器端口不是9000');
+                    log('3. 服务器未配置CORS');
+                }
                 console.error('配置错误：', error);
             }
         }
@@ -151,6 +207,7 @@
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             log('调试页面已加载');
+            checkServer(); // 自动检查服务器状态
         });
     </script>
 </body>
