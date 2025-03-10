@@ -24,7 +24,15 @@ async function getJsApiTicket(accessToken) {
 
 // 生成签名
 function generateSignature(jsapiTicket, noncestr, timestamp, url) {
-    const str = `jsapi_ticket=${jsapiTicket}&noncestr=${noncestr}&timestamp=${timestamp}&url=${url}`;
+    // 按字典序排序参数
+    const params = {
+        jsapi_ticket: jsapiTicket,
+        noncestr: noncestr,
+        timestamp: timestamp,
+        url: url.split('#')[0] // 去除 URL 中的 hash 部分
+    };
+    
+    const str = Object.keys(params).sort().map(key => `${key}=${params[key]}`).join('&');
     return crypto.createHash('sha1').update(str).digest('hex');
 }
 
@@ -36,15 +44,21 @@ exports.handler = async function(event, context) {
         }
 
         const { url } = JSON.parse(event.body);
+
+        console.log("url:{}", url)
         
         // 获取必要的参数
         const accessToken = await getAccessToken();
+        console.log("accessToken:{}", accessToken)
         const jsapiTicket = await getJsApiTicket(accessToken);
-        const noncestr = Math.random().toString(36).substr(2, 15);
+        console.log("jsapiTicket:{}", jsapiTicket)
+        const noncestr = Math.random().toString(36).slice(2, 17); // 使用 slice 替代 substr
+        console.log("noncestr:{}", noncestr)
         const timestamp = Math.floor(Date.now() / 1000);
 
         // 生成签名
         const signature = generateSignature(jsapiTicket, noncestr, timestamp, url);
+        console.log("signature:{}", signature)
 
         // 返回配置信息
         return {

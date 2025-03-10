@@ -110,27 +110,27 @@
     <!-- 引入微信 JS-SDK -->
     <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
     <script>
+        console.log(location.href.split('#')[0])
         // 分享配置
         const shareConfig = {
             title: '我们结婚啦！诚挚邀请您来见证我们的幸福时刻',
             desc: '诚邀您参加我们的婚礼，共同见证这美好的时刻。',
             imgUrl: 'https://keen-tarsier-47f6bc.netlify.app/images/cover.jpg',
-            link: window.location.href.split('#')[0]
+            link: location.href.split('#')[0]
         };
 
         // 初始化微信配置
         async function initWxConfig() {
             if (typeof wx !== 'undefined' && isWeixinBrowser()) {
                 try {
+                    const currentUrl = location.href.split('#')[0];
                     // 获取签名配置
                     const response = await fetch('/.netlify/functions/wx-sign', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({
-                            url: window.location.href.split('#')[0]
-                        })
+                        body: JSON.stringify({ url: currentUrl })
                     });
                     
                     const wxConfig = await response.json();
