@@ -2,8 +2,8 @@ const crypto = require('crypto');
 
 // 微信配置
 const config = {
-    appId: 'YOUR_APP_ID', // 替换为你的 AppID
-    appSecret: 'YOUR_APP_SECRET' // 替换为你的 AppSecret
+    appId: 'wxecb4b49bbd803d21', // 替换为你的 AppID
+    appSecret: '1718b38efd9de2eeb74917cc72b224b3' // 替换为你的 AppSecret
 };
 
 // 获取微信 access_token
