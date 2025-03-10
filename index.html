@@ -82,6 +82,17 @@
             padding: 20px;
             border-radius: 10px;
             text-align: center;
+            position: relative;
+            min-width: 260px;
+        }
+        #qrcode {
+            margin: 10px auto;
+            width: 200px;
+            height: 200px;
+        }
+        #qrcode img {
+            display: block;
+            margin: 0 auto;
         }
         .qrcode-container p {
             margin: 10px 0;
@@ -141,8 +152,8 @@
     <!-- 提示框 -->
     <div id="toast">链接已复制</div>
 
-    <!-- 引入 QRCode 库 -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode.js@1.0.0/qrcode.min.js"></script>
+    <!-- 引入更可靠的 QRCode 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs2@0.0.2/qrcode.min.js"></script>
     <script>
         // 显示二维码
         function showQRCode() {
@@ -153,12 +164,25 @@
             // 清除之前的二维码
             qrcodeContainer.innerHTML = '';
             
-            // 生成新的二维码
-            new QRCode(qrcodeContainer, {
-                text: window.location.href,
-                width: 200,
-                height: 200
-            });
+            // 获取当前页面完整URL
+            const currentUrl = window.location.href;
+            console.log('Generating QR code for URL:', currentUrl); // 调试日志
+            
+            try {
+                // 生成新的二维码
+                new QRCode(qrcodeContainer, {
+                    text: currentUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                console.log('QR code generated successfully'); // 调试日志
+            } catch (error) {
+                console.error('Error generating QR code:', error); // 错误日志
+                qrcodeContainer.innerHTML = '<p style="color: red;">二维码生成失败，请重试</p>';
+            }
         }
 
         // 隐藏二维码
@@ -168,14 +192,42 @@
 
         // 复制链接
         function copyLink() {
-            const dummy = document.createElement('input');
-            document.body.appendChild(dummy);
-            dummy.value = window.location.href;
-            dummy.select();
-            document.execCommand('copy');
-            document.body.removeChild(dummy);
+            const currentUrl = window.location.href;
             
-            // 显示提示
+            if (navigator.clipboard && window.isSecureContext) {
+                // 对于支持 Clipboard API 的现代浏览器
+                navigator.clipboard.writeText(currentUrl)
+                    .then(() => showToast())
+                    .catch(() => fallbackCopyToClipboard(currentUrl));
+            } else {
+                // 回退方案
+                fallbackCopyToClipboard(currentUrl);
+            }
+        }
+
+        // 回退的复制方法
+        function fallbackCopyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast();
+            } catch (err) {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动复制链接');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // 显示提示
+        function showToast() {
             const toast = document.getElementById('toast');
             toast.style.display = 'block';
             setTimeout(() => {
@@ -188,6 +240,11 @@
             if (e.target === this) {
                 hideQRCode();
             }
+        });
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, QR code library status:', typeof QRCode); // 调试日志
         });
     </script>
 </body>
