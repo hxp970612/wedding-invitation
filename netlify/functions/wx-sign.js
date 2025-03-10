@@ -38,20 +38,29 @@ async function getAccessToken() {
 
     console.log('Fetching new access_token from WeChat API');
     const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${wxConfig.appId}&secret=${wxConfig.appSecret}`;
+    console.log('Access token URL:', url);
 
     try {
         const response = await axios.get(url);
-        console.log('Access token response:', response.data);
+        console.log('Access token full response:', response);
+        console.log('Access token response data:', response.data);
 
         if (response.data.access_token) {
             accessTokenCache.token = response.data.access_token;
-            accessTokenCache.expires = now + (response.data.expires_in * 1000) - 60000; // 提前1分钟过期
+            accessTokenCache.expires = now + (response.data.expires_in * 1000) - 60000;
             return response.data.access_token;
         } else {
-            throw new Error('Failed to get access_token: ' + JSON.stringify(response.data));
+            const error = new Error('Failed to get access_token');
+            error.response = response.data;
+            throw error;
         }
     } catch (error) {
-        console.error('Error getting access_token:', error.message);
+        console.error('Error getting access_token:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            url: url
+        });
         throw error;
     }
 }
@@ -66,20 +75,29 @@ async function getJsapiTicket(accessToken) {
 
     console.log('Fetching new jsapi_ticket from WeChat API');
     const url = `https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=${accessToken}&type=jsapi`;
+    console.log('Jsapi ticket URL:', url);
 
     try {
         const response = await axios.get(url);
-        console.log('Jsapi ticket response:', response.data);
+        console.log('Jsapi ticket full response:', response);
+        console.log('Jsapi ticket response data:', response.data);
 
         if (response.data.ticket) {
             jsapiTicketCache.ticket = response.data.ticket;
-            jsapiTicketCache.expires = now + (response.data.expires_in * 1000) - 60000; // 提前1分钟过期
+            jsapiTicketCache.expires = now + (response.data.expires_in * 1000) - 60000;
             return response.data.ticket;
         } else {
-            throw new Error('Failed to get jsapi_ticket: ' + JSON.stringify(response.data));
+            const error = new Error('Failed to get jsapi_ticket');
+            error.response = response.data;
+            throw error;
         }
     } catch (error) {
-        console.error('Error getting jsapi_ticket:', error.message);
+        console.error('Error getting jsapi_ticket:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            url: url
+        });
         throw error;
     }
 }
@@ -94,6 +112,8 @@ function generateSignature(ticket, noncestr, timestamp, url) {
 }
 
 exports.handler = async function(event, context) {
+    console.log('Function started with event:', event);
+    
     // 允许跨域请求
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -101,31 +121,47 @@ exports.handler = async function(event, context) {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
     };
 
-    // 记录请求信息
-    console.log('Request query:', event.queryStringParameters);
-    console.log('Request headers:', event.headers);
+    // 处理 OPTIONS 请求
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers,
+            body: ''
+        };
+    }
 
     try {
-        const url = event.queryStringParameters.url;
+        const url = event.queryStringParameters?.url;
+        console.log('Received URL:', url);
+        
         if (!url) {
             throw new Error('URL parameter is required');
         }
 
+        // 清理URL（移除hash部分）
+        const cleanUrl = url.split('#')[0];
+        console.log('Cleaned URL:', cleanUrl);
+
         const accessToken = await getAccessToken();
+        console.log('Got access_token:', accessToken);
+
         const jsapiTicket = await getJsapiTicket(accessToken);
+        console.log('Got jsapi_ticket:', jsapiTicket);
+
         const nonceStr = generateNonceStr();
         const timestamp = Math.floor(Date.now() / 1000);
 
-        const signature = generateSignature(jsapiTicket, nonceStr, timestamp, url);
+        const signature = generateSignature(jsapiTicket, nonceStr, timestamp, cleanUrl);
 
         const responseData = {
             appId: wxConfig.appId,
             timestamp: timestamp,
             nonceStr: nonceStr,
-            signature: signature
+            signature: signature,
+            url: cleanUrl // 添加用于调试
         };
 
-        console.log('Response data:', responseData);
+        console.log('Final response data:', responseData);
 
         return {
             statusCode: 200,
@@ -133,13 +169,20 @@ exports.handler = async function(event, context) {
             body: JSON.stringify(responseData)
         };
     } catch (error) {
-        console.error('Error in wx-sign function:', error);
+        console.error('Error in wx-sign function:', {
+            message: error.message,
+            stack: error.stack,
+            response: error.response?.data,
+            status: error.response?.status
+        });
+
         return {
             statusCode: 500,
             headers,
             body: JSON.stringify({
                 error: error.message,
-                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+                details: error.response?.data || error.stack,
+                url: event.queryStringParameters?.url
             })
         };
     }
