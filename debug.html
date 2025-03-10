@@ -65,13 +65,27 @@
                 const currentUrl = window.location.href.split('#')[0];
                 log('当前URL: ' + currentUrl);
 
-                // 使用 Netlify Function URL
-                const response = await fetch('/.netlify/functions/wx-sign?url=' + encodeURIComponent(currentUrl));
+                // 构建完整的 Netlify Function URL
+                const functionUrl = window.location.origin + '/.netlify/functions/wx-sign?url=' + encodeURIComponent(currentUrl);
+                log('请求签名接口URL: ' + functionUrl);
+
+                const response = await fetch(functionUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                log('签名接口响应状态: ' + response.status);
+                
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    log('错误响应内容: ' + errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
                 }
+
                 const data = await response.json();
-                log('签名接口响应：' + JSON.stringify(data, null, 2));
+                log('签名接口响应数据: ' + JSON.stringify(data, null, 2));
 
                 // 调用实际的配置代码
                 wx.config({
