@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试版本 - 微信分享</title>
+    <style>
+        body { padding: 20px; font-family: Arial, sans-serif; }
+        .debug-panel {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .debug-log {
+            background: #000;
+            color: #fff;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-family: monospace;
+            height: 200px;
+            overflow: auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-panel">
+        <h3>调试控制面板</h3>
+        <button onclick="mockWxConfig()">模拟微信配置</button>
+        <button onclick="mockShare()">模拟分享</button>
+        <button onclick="clearLog()">清除日志</button>
+    </div>
+
+    <div class="debug-log" id="debugLog"></div>
+
+    <script>
+        // 模拟微信环境
+        window.wx = {
+            config: function(config) {
+                log('wx.config 被调用，参数：' + JSON.stringify(config, null, 2));
+                setTimeout(() => this.ready(), 100);
+            },
+            ready: function(callback) {
+                log('wx.ready 被调用');
+                if (callback) callback();
+            },
+            updateAppMessageShareData: function(config) {
+                log('分享到好友被调用，参数：' + JSON.stringify(config, null, 2));
+            },
+            updateTimelineShareData: function(config) {
+                log('分享到朋友圈被调用，参数：' + JSON.stringify(config, null, 2));
+            }
+        };
+
+        // 实际调用签名接口
+        async function mockWxConfig() {
+            try {
+                log('开始请求签名...');
+                const currentUrl = window.location.href.split('#')[0];
+                log('当前URL: ' + currentUrl);
+
+                // 使用 Netlify Function URL
+                const response = await fetch('/.netlify/functions/wx-sign?url=' + encodeURIComponent(currentUrl));
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                log('签名接口响应：' + JSON.stringify(data, null, 2));
+
+                // 调用实际的配置代码
+                wx.config({
+                    debug: true,
+                    appId: data.appId,
+                    timestamp: data.timestamp,
+                    nonceStr: data.nonceStr,
+                    signature: data.signature,
+                    jsApiList: [
+                        'updateAppMessageShareData',
+                        'updateTimelineShareData'
+                    ]
+                });
+            } catch (error) {
+                log('错误：' + error.message);
+                console.error('配置错误：', error);
+            }
+        }
+
+        // 模拟分享动作
+        function mockShare() {
+            const shareData = {
+                title: '我们结婚啦！',
+                desc: '诚挚邀请您来见证我们的幸福时刻',
+                imgUrl: location.origin + '/images/cover.jpg',
+                link: location.href.split('#')[0]
+            };
+
+            log('分享数据：' + JSON.stringify(shareData, null, 2));
+            wx.updateAppMessageShareData({
+                ...shareData,
+                success: function() {
+                    log('分享到好友设置成功');
+                },
+                fail: function(err) {
+                    log('分享到好友设置失败：' + JSON.stringify(err));
+                }
+            });
+            wx.updateTimelineShareData({
+                ...shareData,
+                success: function() {
+                    log('分享到朋友圈设置成功');
+                },
+                fail: function(err) {
+                    log('分享到朋友圈设置失败：' + JSON.stringify(err));
+                }
+            });
+        }
+
+        // 日志功能
+        function log(message) {
+            const debugLog = document.getElementById('debugLog');
+            const time = new Date().toLocaleTimeString();
+            const formattedMessage = message.replace(/\n/g, '<br>').replace(/ /g, '&nbsp;');
+            debugLog.innerHTML += `<div style="border-bottom: 1px solid #333; padding: 5px;">[${time}] ${formattedMessage}</div>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('debugLog').innerHTML = '';
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            log('调试页面已加载');
+        });
+    </script>
+</body>
+</html> 
