@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- <title>我们结婚啦！</title> -->
-    
+
     <!-- 微信分享卡片配置 -->
     <meta itemprop="name" content="我们结婚啦！诚挚邀请您来见证我们的幸福时刻">
     <meta itemprop="description" content="诚邀您参加我们的婚礼，共同见证这美好的时刻。">
     <meta itemprop="image" content="https://keen-tarsier-47f6bc.netlify.app/images/cover.jpg">
-    
+
     <!-- 通用社交分享元数据 -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="我们结婚啦！诚挚邀请您来见证我们的幸福时刻">
     <meta property="og:description" content="诚邀您参加我们的婚礼，共同见证这美好的时刻。">
     <meta property="og:image" content="https://keen-tarsier-47f6bc.netlify.app/images/cover.jpg">
     <meta property="og:url" content="https://keen-tarsier-47f6bc.netlify.app/pages/invite_page">
-    
+
     <style>
         body {
             margin: 0;
@@ -24,18 +25,21 @@
             font-family: 'Microsoft YaHei', sans-serif;
             background-color: #f9f7f7;
         }
+
         .container {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
             text-align: center;
         }
+
         img {
             max-width: 100%;
             height: auto;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .share-buttons {
             margin: 20px 0;
             padding: 10px;
@@ -45,6 +49,7 @@
             flex-wrap: wrap;
             gap: 10px;
         }
+
         .share-button {
             display: inline-flex;
             align-items: center;
@@ -57,21 +62,26 @@
             border: none;
             transition: opacity 0.3s;
         }
+
         .share-button:hover {
             opacity: 0.9;
         }
+
         .share-button img {
             width: 20px;
             height: 20px;
             margin-right: 8px;
             box-shadow: none;
         }
+
         .wechat {
             background-color: #7bb32e;
         }
+
         .copy {
             background-color: #666;
         }
+
         #toast {
             position: fixed;
             bottom: 20px;
@@ -85,20 +95,23 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <a href="pages/invite_page.html">
             <img src="images/cover.jpg" alt="婚礼邀请函" id="shareImage">
         </a>
-        
+
         <!-- 分享按钮 -->
         <div class="share-buttons">
             <button class="share-button wechat" onclick="shareToWechat()">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M8.5,13.5A1.5,1.5,0,1,0,7,12,1.5,1.5,0,0,0,8.5,13.5Zm6.5-1.5a1.5,1.5,0,1,1-1.5-1.5A1.5,1.5,0,0,1,15,12ZM12,1.5A10.5,10.5,0,1,0,22.5,12,10.5,10.5,0,0,0,12,1.5Z'/%3E%3C/svg%3E" alt="微信">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M8.5,13.5A1.5,1.5,0,1,0,7,12,1.5,1.5,0,0,0,8.5,13.5Zm6.5-1.5a1.5,1.5,0,1,1-1.5-1.5A1.5,1.5,0,0,1,15,12ZM12,1.5A10.5,10.5,0,1,0,22.5,12,10.5,10.5,0,0,0,12,1.5Z'/%3E%3C/svg%3E"
+                    alt="微信">
                 分享到微信
             </button>
             <button class="share-button copy" onclick="copyLink()">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z'/%3E%3C/svg%3E" alt="复制">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z'/%3E%3C/svg%3E"
+                    alt="复制">
                 复制链接
             </button>
         </div>
@@ -121,83 +134,81 @@
 
         // 初始化微信配置
         async function initWxConfig() {
-            if (typeof wx !== 'undefined' && isWeixinBrowser()) {
-                try {
-                    const currentUrl = location.href.split('#')[0];
-                    const apiUrl = `https://1311648736-ft8i2n8ogo.ap-shanghai.tencentscf.com/api/wx/config?url=${encodeURIComponent(currentUrl)}`;
-                    // 获取签名配置
-                    const response = await fetch(apiUrl, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
+            try {
+                const currentUrl = location.href.split('#')[0];
+                const apiUrl = `https://1311648736-ft8i2n8ogo.ap-shanghai.tencentscf.com/api/wx/config?url=${encodeURIComponent(currentUrl)}`;
+                // 获取签名配置
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log('错误响应内容: ' + errorText);
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+                }
+
+                const wxConfig = await response.json();
+
+                // 配置微信 JS-SDK
+                wx.config({
+                    debug: true,
+                    appId: wxConfig.appId,
+                    timestamp: wxConfig.timestamp,
+                    nonceStr: wxConfig.nonceStr,
+                    signature: wxConfig.signature,
+                    jsApiList: [
+                        'updateAppMessageShareData',
+                        'updateTimelineShareData',
+                        'onMenuShareTimeline',
+                        'onMenuShareAppMessage'
+                    ]
+                });
+
+                // 注册分享事件
+                wx.ready(function () {
+                    console.log('微信 JS-SDK 配置成功');
+
+                    // 分享给朋友
+                    wx.updateAppMessageShareData({
+                        title: shareConfig.title,
+                        desc: shareConfig.desc,
+                        link: shareConfig.link,
+                        imgUrl: shareConfig.imgUrl,
+                        success: function () {
+                            console.log('分享设置成功');
+                        },
+                        fail: function (res) {
+                            console.error('分享设置失败：', res);
                         }
                     });
 
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        log('错误响应内容: ' + errorText);
-                        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
-                    }
-                    
-                    const wxConfig = await response.json();
-                    
-                    // 配置微信 JS-SDK
-                    wx.config({
-                        debug: true,
-                        appId: wxConfig.appId,
-                        timestamp: wxConfig.timestamp,
-                        nonceStr: wxConfig.nonceStr,
-                        signature: wxConfig.signature,
-                        jsApiList: [
-                            'updateAppMessageShareData',
-                            'updateTimelineShareData',
-                            'onMenuShareTimeline',
-                            'onMenuShareAppMessage'
-                        ]
+                    // 分享到朋友圈
+                    wx.updateTimelineShareData({
+                        title: shareConfig.title,
+                        link: shareConfig.link,
+                        imgUrl: shareConfig.imgUrl,
+                        success: function () {
+                            console.log('分享设置成功');
+                        },
+                        fail: function (res) {
+                            console.error('分享设置失败：', res);
+                        }
                     });
 
-                    // 注册分享事件
-                    wx.ready(function() {
-                        console.log('微信 JS-SDK 配置成功');
-                        
-                        // 分享给朋友
-                        wx.updateAppMessageShareData({
-                            title: shareConfig.title,
-                            desc: shareConfig.desc,
-                            link: shareConfig.link,
-                            imgUrl: shareConfig.imgUrl,
-                            success: function() {
-                                console.log('分享设置成功');
-                            },
-                            fail: function(res) {
-                                console.error('分享设置失败：', res);
-                            }
-                        });
-                        
-                        // 分享到朋友圈
-                        wx.updateTimelineShareData({
-                            title: shareConfig.title,
-                            link: shareConfig.link,
-                            imgUrl: shareConfig.imgUrl,
-                            success: function() {
-                                console.log('分享设置成功');
-                            },
-                            fail: function(res) {
-                                console.error('分享设置失败：', res);
-                            }
-                        });
+                    // 兼容旧版本
+                    wx.onMenuShareTimeline(shareConfig);
+                    wx.onMenuShareAppMessage(shareConfig);
+                });
 
-                        // 兼容旧版本
-                        wx.onMenuShareTimeline(shareConfig);
-                        wx.onMenuShareAppMessage(shareConfig);
-                    });
-
-                    wx.error(function(res) {
-                        console.error('微信配置失败：', res);
-                    });
-                } catch (error) {
-                    console.error('初始化微信配置失败：', error);
-                }
+                wx.error(function (res) {
+                    console.error('微信配置失败：', res);
+                });
+            } catch (error) {
+                console.error('初始化微信配置失败：', error);
             }
         }
 
@@ -219,7 +230,7 @@
         // 复制链接
         function copyLink() {
             const currentUrl = window.location.href;
-            
+
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(currentUrl)
                     .then(() => showToast('链接已复制'))
@@ -238,7 +249,7 @@
             document.body.appendChild(textArea);
             textArea.focus();
             textArea.select();
-            
+
             try {
                 document.execCommand('copy');
                 showToast('链接已复制');
@@ -246,7 +257,7 @@
                 console.error('复制失败:', err);
                 alert('复制失败，请手动复制链接');
             }
-            
+
             document.body.removeChild(textArea);
         }
 
@@ -264,4 +275,5 @@
         document.addEventListener('DOMContentLoaded', initWxConfig);
     </script>
 </body>
+
 </html>
