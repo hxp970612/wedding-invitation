@@ -115,7 +115,7 @@
             title: '我们结婚啦！诚挚邀请您来见证我们的幸福时刻',
             desc: '诚邀您参加我们的婚礼，共同见证这美好的时刻。',
             imgUrl: 'https://keen-tarsier-47f6bc.netlify.app/images/cover.jpg',
-            link: "https://keen-tarsier-47f6bc.netlify.app/pages/invite_page.html"
+            link: window.location.href.split('#')[0]
         };
 
         // 初始化微信配置
@@ -129,7 +129,7 @@
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            url: "https://keen-tarsier-47f6bc.netlify.app/pages/invite_page.html"
+                            url: window.location.href.split('#')[0]
                         })
                     });
                     
