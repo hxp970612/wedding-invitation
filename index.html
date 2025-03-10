@@ -129,13 +129,13 @@
             title: '我们结婚啦！诚挚邀请您来见证我们的幸福时刻',
             desc: '诚邀您参加我们的婚礼，共同见证这美好的时刻。',
             imgUrl: 'https://keen-tarsier-47f6bc.netlify.app/images/cover.jpg',
-            link: location.href.split('#')[0]
+            link: 'https://keen-tarsier-47f6bc.netlify.app/pages/invite_page'
         };
 
         // 初始化微信配置
         async function initWxConfig() {
             try {
-                const currentUrl = location.href.split('#')[0];
+                const currentUrl = 'https://keen-tarsier-47f6bc.netlify.app/pages/invite_page';
                 const apiUrl = `https://1311648736-ft8i2n8ogo.ap-shanghai.tencentscf.com/api/wx/config?url=${encodeURIComponent(currentUrl)}`;
                 // 获取签名配置
                 const response = await fetch(apiUrl, {
@@ -229,7 +229,7 @@
 
         // 复制链接
         function copyLink() {
-            const currentUrl = window.location.href;
+            const currentUrl = 'https://keen-tarsier-47f6bc.netlify.app/pages/invite_page';
 
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(currentUrl)

@@ -147,7 +147,17 @@
                     jsApiList: [
                         'updateAppMessageShareData',
                         'updateTimelineShareData'
-                    ]
+                    ],
+                    success: function() {
+                        log('wx.config 配置成功');
+                        log('注意：如果看到 noPermissionJsApi 错误，请检查：');
+                        log('1. 公众号是否已获得相关接口权限');
+                        log('2. 域名是否已在公众号后台正确配置');
+                        log('3. 接口权限是否已开通');
+                    },
+                    fail: function(res) {
+                        log('wx.config 配置失败：' + JSON.stringify(res));
+                    }
                 });
             } catch (error) {
                 log('错误：' + error.message);
@@ -171,6 +181,11 @@
             };
 
             log('分享数据：' + JSON.stringify(shareData, null, 2));
+            log('注意：如果分享失败，请检查：');
+            log('1. 公众号是否已获得分享接口权限');
+            log('2. 域名是否已在公众号后台正确配置');
+            log('3. 接口权限是否已开通');
+
             wx.updateAppMessageShareData({
                 ...shareData,
                 success: function() {
@@ -178,6 +193,9 @@
                 },
                 fail: function(err) {
                     log('分享到好友设置失败：' + JSON.stringify(err));
+                    if (err.errMsg.includes('auth deny')) {
+                        log('权限被拒绝，请检查公众号配置');
+                    }
                 }
             });
             wx.updateTimelineShareData({
@@ -187,6 +205,9 @@
                 },
                 fail: function(err) {
                     log('分享到朋友圈设置失败：' + JSON.stringify(err));
+                    if (err.errMsg.includes('auth deny')) {
+                        log('权限被拒绝，请检查公众号配置');
+                    }
                 }
             });
         }
